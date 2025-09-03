@@ -1,0 +1,40 @@
+{
+    "Monday": [
+        "9:00 AM - 11:00 AM: Math Study",
+        "11:30 AM - 1:30 PM: Physics Study",
+        "2:00 PM - 4:00 PM: Chemistry Study",
+        "4:30 PM - 6:30 PM: Relax and Light Review"
+    ],
+    "Tuesday": [
+        "10:00 AM - 1:00 PM: Mock Test",
+        "2:00 PM - 3:00 PM: Review Mock Test Solutions",
+        "3:30 PM - 5:00 PM: Concept Revision"
+    ],
+    "Wednesday": [
+        "9:00 AM - 11:00 AM: Math Study",
+        "11:30 AM - 1:30 PM: Physics Study",
+        "2:00 PM - 4:00 PM: Chemistry Study",
+        "4:30 PM - 6:30 PM: Relax and Light Review"
+    ],
+    "Thursday": [
+        "10:00 AM - 1:00 PM: Mock Test",
+        "2:00 PM - 3:00 PM: Review Mock Test Solutions",
+        "3:30 PM - 5:00 PM: Concept Revision"
+    ],
+    "Friday": [
+        "9:00 AM - 11:00 AM: Math Study",
+        "11:30 AM - 1:30 PM: Physics Study",
+        "2:00 PM - 4:00 PM: Chemistry Study",
+        "4:30 PM - 6:30 PM: Relax and Light Review"
+    ],
+    "Saturday": [
+        "10:00 AM - 12:00 PM: Revise Notes",
+        "1:00 PM - 4:00 PM: Group Study",
+        "5:00 PM - 6:00 PM: Yoga/Exercise"
+    ],
+    "Sunday": [
+        "10:00 AM - 12:00 PM: Revise Notes",
+        "1:00 PM - 4:00 PM: Group Study",
+        "5:00 PM - 6:00 PM: Yoga/Exercise"
+    ]
+}

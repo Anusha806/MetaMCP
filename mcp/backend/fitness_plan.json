@@ -1,0 +1,30 @@
+{
+    "Monday": {
+        "type": "Cardio",
+        "calories": 375
+    },
+    "Tuesday": {
+        "type": "Strength",
+        "calories": 429
+    },
+    "Wednesday": {
+        "type": "Yoga",
+        "calories": 190
+    },
+    "Thursday": {
+        "type": "Cardio",
+        "calories": 500
+    },
+    "Friday": {
+        "type": "Strength",
+        "calories": 285
+    },
+    "Saturday": {
+        "type": "Yoga",
+        "calories": 190
+    },
+    "Sunday": {
+        "type": "Yoga",
+        "calories": 286
+    }
+}
