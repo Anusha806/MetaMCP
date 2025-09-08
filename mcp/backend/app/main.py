@@ -4,10 +4,12 @@
 # import time
 # import sys
 # import subprocess
+# import zipfile
 # from typing import List, Set
 
 # from fastapi import FastAPI
 # from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.responses import FileResponse
 # from pydantic import BaseModel
 # from dotenv import load_dotenv
 # from openai import OpenAI
@@ -45,10 +47,7 @@
 #     unique = str(int(time.time()))
 #     return f"{short}_{unique}{extension}"
 
-# # Basic stdlib filter using Python's known stdlib names + a few common aliases.
-# # Python 3.10+ has sys.stdlib_module_names; for safety we fall back if missing.
 # _STDLIB: Set[str] = set(getattr(sys, "stdlib_module_names", set())) or {
-#     # Common stdlib modules (fallback list; not exhaustive but safe)
 #     "abc","argparse","asyncio","base64","collections","concurrent","contextlib","copy",
 #     "csv","ctypes","datetime","decimal","enum","functools","glob","gzip","hashlib","heapq",
 #     "html","http","importlib","io","itertools","json","logging","math","multiprocessing",
@@ -58,14 +57,9 @@
 #     "uuid","unittest","urllib","warnings","weakref","xml","zipfile"
 # }
 
-# # Some external packages have top-level names that differ from the pip name;
-# # handle a few common mappings here if needed later.
-# _PIP_NAME_OVERRIDES = {
-#     # "PIL": "Pillow",
-# }
+# _PIP_NAME_OVERRIDES = {}
 
 # def _top_level_module(name: str) -> str:
-#     """Reduce 'pkg.sub.mod as alias' → 'pkg'."""
 #     name = name.strip()
 #     if " as " in name:
 #         name = name.split(" as ", 1)[0]
@@ -74,16 +68,7 @@
 #     return name.strip()
 
 # def extract_requirements_from_code(code: str) -> List[str]:
-#     """
-#     Parse import lines from code and return a list of non-stdlib top-level packages.
-#     Handles:
-#       - import a, b, c
-#       - import a as x
-#       - from a import b
-#       - from a.b import c
-#     """
 #     reqs: Set[str] = set()
-
 #     for raw in code.splitlines():
 #         line = raw.strip()
 #         if not line or line.startswith("#"):
@@ -97,21 +82,15 @@
 #                     reqs.add(_PIP_NAME_OVERRIDES.get(top, top))
 
 #         elif line.startswith("from "):
-#             # from a.b import c → a
 #             after_from = line[len("from "):]
 #             pkg = after_from.split(" import ")[0].strip()
 #             top = _top_level_module(pkg)
 #             if top and top not in _STDLIB and top.isidentifier():
 #                 reqs.add(_PIP_NAME_OVERRIDES.get(top, top))
 
-#     # Very common external libs might be used via strings; keep as-is if imported.
 #     return sorted(reqs)
 
 # def extract_code_from_response(text: str) -> str:
-#     """
-#     Prefer ```python ... ``` fenced blocks; fall back to generic ``` ... ```.
-#     If none, return the raw text.
-#     """
 #     m = re.findall(r"```python(.*?)```", text, re.DOTALL | re.IGNORECASE)
 #     if m:
 #         return m[0].strip()
@@ -120,12 +99,32 @@
 #         return m2[0].strip()
 #     return text.strip()
 
+# def create_env_file(path: str):
+#     """Create a .env file with placeholders for API keys"""
+#     env_content = (
+#         "# Environment Variables\n"
+#         "API_KEY=YOUR_API_KEY_HERE\n"
+#         "SECRET_KEY=YOUR_SECRET_KEY_HERE\n"
+#     )
+#     with open(path, "w", encoding="utf-8") as f:
+#         f.write(env_content)
+
+# def make_zip(files: dict, zip_path: str):
+#     """Bundle all files into a single zip"""
+#     with zipfile.ZipFile(zip_path, "w") as zipf:
+#         for f in files.values():
+#             if os.path.exists(f):
+#                 zipf.write(f, os.path.basename(f))
+#     return zip_path
+
 # # ---------- Routes ----------
 
 # @app.post("/generate")
 # def generate(req: PromptRequest):
 #     try:
-#         # 1) Call OpenRouter to generate code
+#         print(f"Received request: {req.prompt}")  # Debug log
+        
+#         # 1) Call OpenRouter
 #         response = client.chat.completions.create(
 #             model="gpt-4o-mini",
 #             messages=[
@@ -133,30 +132,10 @@
 #                     "role": "system",
 #                     "content": (
 #                         "You are an AI code generator.\n"
-#                         "Your job is to produce COMPLETE, runnable Python programs "
-#                         "from natural language prompts.\n\n"
-
-#                         "⚠️ Output Rules:\n"
-#                         "- You MUST output only a single fenced code block: ```python ... ```.\n"
-#                         "- Do NOT include explanations, text, or comments outside the code block.\n"
-#                         "- Inside the code block, only include real Python code. "
-#                         "Avoid markdown, placeholders, or explanatory comments that break execution.\n\n"
-
-#                         "💡 Coding Rules:\n"
-#                         "1. Always implement a working solution, not just placeholders.\n"
-#                         "2. If the request is vague (e.g., 'todo list', 'weekly schedule'), "
-#                         "make a small but functional CLI app with menus or options.\n"
-#                         "3. Prefer clarity and structure: use functions or classes if useful.\n"
-#                         "4. If persistence is relevant (e.g., todo list), use JSON or CSV storage.\n"
-#                         "5. ✅ IMPORTANT: If a prompt requires external data (like weather, news, stocks):\n"
-#                             "   - First try open-source datasets, public/free APIs, or built-in libraries.\n"
-#                             "   - If that's not possible, only then include an API key, but use a safe placeholder "
-#                             "like 'YOUR_API_KEY' instead of a real one.\n"
-#                             "   - The code must still run without crashing when no API key is present.\n"
-#                         "6. Ensure the script runs with `python file.py` without modification."
+#                         "Output ONLY ```python ... ``` fenced code.\n"
+#                         "Never add extra text.\n"
 #                     )
 #                 },
-
 #                 {"role": "user", "content": f"Generate MCP code based on: {req.prompt}"},
 #             ],
 #         )
@@ -167,104 +146,104 @@
 #         if not code_output:
 #             return {"error": "The model returned no code."}
 
-#         # 2) Prepare filesystem layout
+#         # 2) File structure (Keep existing mcp/generated structure)
 #         save_dir = os.path.join("mcp", "generated")
 #         os.makedirs(save_dir, exist_ok=True)
 
 #         py_path = os.path.join(save_dir, safe_filename(req.prompt, ".py"))
 #         req_path = os.path.join(save_dir, "requirements.txt")
 #         readme_path = os.path.join(save_dir, "README.md")
+#         env_path = os.path.join(save_dir, ".env")
+#         zip_path = os.path.join(save_dir, "mcp_package.zip")
 
-#         # 3) Write code file
+#         # 3) Write files
 #         with open(py_path, "w", encoding="utf-8") as f:
 #             f.write(code_output)
 
-#         # 4) Extract & install dependencies
 #         deps = extract_requirements_from_code(code_output)
 
-#         # Write requirements.txt (overwrite with latest set)
-#         # with open(req_path, "w", encoding="utf-8") as f:
-#         #     f.write("\n".join(deps))
-
-#         # Merge with existing requirements.txt if it exists
-#         existing_deps = set()
+#         all_deps = set()
 #         if os.path.exists(req_path):
 #             with open(req_path, "r", encoding="utf-8") as f:
 #                 for line in f:
-#                     pkg = line.strip()
-#                     if pkg:
-#                         existing_deps.add(pkg)
+#                     if line.strip():
+#                         all_deps.add(line.strip())
+#         all_deps.update(deps)
 
-#         all_deps = sorted(existing_deps.union(deps))
-
-# # Write back updated requirements.txt
 #         with open(req_path, "w", encoding="utf-8") as f:
-#             f.write("\n".join(all_deps))
+#             f.write("\n".join(sorted(all_deps)))
 
-
-#         install_stdout = ""
-#         install_stderr = ""
-#         if deps:
-#             # Install into current interpreter's environment
-#             try:
-#                 proc = subprocess.run(
-#                     [sys.executable, "-m", "pip", "install", "-r", req_path],
-#                     capture_output=True,
-#                     text=True,
-#                     check=False,     # don't hard-fail the whole request; report below
-#                 )
-#                 install_stdout = proc.stdout.strip()
-#                 install_stderr = proc.stderr.strip()
-#             except Exception as install_exc:
-#                 install_stderr = f"pip install raised: {install_exc}"
-
-#         # 5) Test-run the generated script (short timeout)
-#         try:
-#             run_result = subprocess.run(
-#                 [sys.executable, py_path],
-#                 capture_output=True,
-#                 text=True,
-#                 timeout=12,  # guard against infinite loops
-#             )
-#             test_output = {
-#                 "stdout": run_result.stdout.strip(),
-#                 "stderr": run_result.stderr.strip(),
-#             }
-#         except Exception as run_err:
-#             test_output = {"error": str(run_err)}
-
-#         # 6) Write README (truncate very long prompts)
-#         prompt_preview = (req.prompt[:200] + "…") if len(req.prompt) > 200 else req.prompt
 #         with open(readme_path, "w", encoding="utf-8") as f:
-#             f.write(f"# MCP\n\n")
-#             f.write(f"**Prompt:** {prompt_preview}\n\n")
-#             f.write("This MCP was auto-generated by MetaMCP.\n\n")
-#             f.write("## Run\n")
-#             f.write(f"```bash\npython {os.path.basename(py_path)}\n```\n")
+#             f.write(f"# MCP\n\nPrompt: {req.prompt}\n\nGenerated by MetaMCP.\n")
+
+#         create_env_file(env_path)
+
+#         # 4) Make ZIP
+#         files = {
+#             "python_file": py_path,
+#             "requirements": req_path,
+#             "readme": readme_path,
+#             "env": env_path,
+#         }
+#         make_zip(files, zip_path)
+        
+#         print(f"Generated files and zip at: {zip_path}")  # Debug log
+
+#         # Generate a unique zip filename for download
+#         download_zip_filename = safe_filename(req.prompt, "_package.zip")
 
 #         return {
 #             "message": "MCP generated successfully ✅",
-#             "files": {
-#                 "python_file": py_path,
-#                 "requirements": req_path,
-#                 "readme": readme_path,
-#             },
-#             "preview": code_output[:500] + ("..." if len(code_output) > 500 else ""),
-#             "install": {
-#                 "attempted": bool(deps),
-#                 "deps": deps,
-#                 "stdout": install_stdout,
-#                 "stderr": install_stderr,
-#             },
-#             "test_run": test_output,
+#             "files": files,
+#             "zip": zip_path,
+#             "download_available": True,
+#             "download_filename": download_zip_filename,
+#             "preview": code_output[:500] + ("..." if len(code_output) > 500 else "")
 #         }
 
 #     except Exception as e:
+#         print(f"Error: {str(e)}")  # Debug log
 #         return {"error": str(e)}
+
+# @app.get("/download_zip")
+# def download_zip():
+#     """Download the latest generated zip file"""
+#     save_dir = os.path.join("mcp", "generated")
+#     zip_path = os.path.join(save_dir, "mcp_package.zip")
+    
+#     print(f"Download requested for: {zip_path}")  # Debug log
+    
+#     if os.path.exists(zip_path):
+#         # Get the most recent python file to generate a better filename
+#         try:
+#             py_files = [f for f in os.listdir(save_dir) if f.endswith('.py')]
+#             if py_files:
+#                 # Use the most recent .py file name for the zip
+#                 latest_py = max(py_files, key=lambda x: os.path.getctime(os.path.join(save_dir, x)))
+#                 download_filename = latest_py.replace('.py', '_package.zip')
+#             else:
+#                 download_filename = "mcp_package.zip"
+#         except:
+#             download_filename = "mcp_package.zip"
+            
+#         print(f"Serving file as: {download_filename}")  # Debug log
+        
+#         return FileResponse(
+#             path=zip_path,
+#             filename=download_filename,
+#             media_type='application/zip',
+#             headers={
+#                 "Content-Disposition": f"attachment; filename={download_filename}",
+#                 "Cache-Control": "no-cache"
+#             }
+#         )
+    
+#     return {"error": "No zip file found. Generate one first."}
 
 # @app.get("/")
 # def root():
 #     return {"message": "MetaMCP Backend is running 🚀"}
+
 
 import os
 import re
@@ -272,7 +251,7 @@ import time
 import sys
 import subprocess
 import zipfile
-from typing import List, Set
+from typing import List, Set, Dict, Tuple
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -324,7 +303,13 @@ _STDLIB: Set[str] = set(getattr(sys, "stdlib_module_names", set())) or {
     "uuid","unittest","urllib","warnings","weakref","xml","zipfile"
 }
 
-_PIP_NAME_OVERRIDES = {}
+_PIP_NAME_OVERRIDES = {
+    "cv2": "opencv-python",
+    "PIL": "Pillow",
+    "yaml": "PyYAML",
+    "sklearn": "scikit-learn",
+    "bs4": "beautifulsoup4",
+}
 
 def _top_level_module(name: str) -> str:
     name = name.strip()
@@ -357,6 +342,232 @@ def extract_requirements_from_code(code: str) -> List[str]:
 
     return sorted(reqs)
 
+def extract_api_keys_and_secrets(code: str) -> Dict[str, str]:
+    """Extract potential API keys, secrets, and configuration from code"""
+    env_vars = {}
+    
+    # Common patterns for API keys and secrets
+    patterns = {
+        # OpenAI API
+        r'openai[._]api[._]key': 'OPENAI_API_KEY',
+        r'openai[._]key': 'OPENAI_API_KEY',
+        r'OpenAI\([^)]*api_key\s*=\s*["\']([^"\']*)["\']': 'OPENAI_API_KEY',
+        
+        # Generic API patterns
+        r'api[._]key': 'API_KEY',
+        r'apikey': 'API_KEY',
+        r'secret[._]key': 'SECRET_KEY',
+        r'access[._]token': 'ACCESS_TOKEN',
+        r'bearer[._]token': 'BEARER_TOKEN',
+        
+        # Database URLs
+        r'database[._]url': 'DATABASE_URL',
+        r'db[._]url': 'DATABASE_URL',
+        
+        # Service specific
+        r'weather[._]api': 'WEATHER_API_KEY',
+        r'news[._]api': 'NEWS_API_KEY',
+        r'github[._]token': 'GITHUB_TOKEN',
+        r'slack[._]token': 'SLACK_TOKEN',
+        r'discord[._]token': 'DISCORD_TOKEN',
+        
+        # AWS
+        r'aws[._]access[._]key': 'AWS_ACCESS_KEY_ID',
+        r'aws[._]secret': 'AWS_SECRET_ACCESS_KEY',
+        
+        # Google
+        r'google[._]api': 'GOOGLE_API_KEY',
+        r'gmail[._]password': 'GMAIL_APP_PASSWORD',
+        
+        # Other common services
+        r'stripe[._]key': 'STRIPE_API_KEY',
+        r'twilio[._]sid': 'TWILIO_ACCOUNT_SID',
+        r'twilio[._]token': 'TWILIO_AUTH_TOKEN',
+    }
+    
+    # Look for environment variable usage patterns
+    env_patterns = [
+        r'os\.getenv\(["\']([^"\']+)["\']',
+        r'os\.environ\[["\']([^"\']+)["\']\]',
+        r'getenv\(["\']([^"\']+)["\']',
+        r'environ\[["\']([^"\']+)["\']\]',
+    ]
+    
+    code_lower = code.lower()
+    
+    # Check for common API key patterns
+    for pattern, env_name in patterns.items():
+        if re.search(pattern, code_lower):
+            env_vars[env_name] = f"your_{env_name.lower()}_here"
+    
+    # Extract actual environment variable names used in code
+    for pattern in env_patterns:
+        matches = re.findall(pattern, code, re.IGNORECASE)
+        for match in matches:
+            # Generate appropriate placeholder
+            placeholder = f"your_{match.lower().replace('_', '_')}_here"
+            env_vars[match] = placeholder
+    
+    # Add some common defaults if it looks like an API-heavy application
+    if any(keyword in code_lower for keyword in ['requests.', 'http', 'api', 'client']):
+        if 'API_KEY' not in env_vars:
+            env_vars['API_KEY'] = 'your_api_key_here'
+    
+    # Add database-related vars if database operations detected
+    if any(keyword in code_lower for keyword in ['sqlite', 'postgres', 'mysql', 'database', 'db']):
+        if 'DATABASE_URL' not in env_vars:
+            env_vars['DATABASE_URL'] = 'sqlite:///./database.db'
+    
+    return env_vars
+
+def create_enhanced_env_file(path: str, detected_vars: Dict[str, str]):
+    """Create a comprehensive .env file with detected variables and common ones"""
+    
+    env_content = [
+        "# Environment Variables for MCP Application",
+        "# Replace placeholder values with your actual keys/tokens",
+        "",
+        "# =============================================================================",
+        "# DETECTED VARIABLES (Based on your generated code)",
+        "# =============================================================================",
+    ]
+    
+    if detected_vars:
+        for var, placeholder in sorted(detected_vars.items()):
+            env_content.append(f"{var}={placeholder}")
+    else:
+        env_content.append("# No specific API keys detected in the generated code")
+    
+    env_content.extend([
+        "",
+        "# =============================================================================", 
+        "# COMMON OPTIONAL VARIABLES (Uncomment and fill as needed)",
+        "# =============================================================================",
+        "",
+        "# OpenAI API",
+        "# OPENAI_API_KEY=sk-your-openai-api-key-here",
+        "# OPENAI_ORG_ID=org-your-organization-id",
+        "",
+        "# Database Configuration", 
+        "# DATABASE_URL=sqlite:///./app.db",
+        "# DB_HOST=localhost",
+        "# DB_PORT=5432",
+        "# DB_USER=username",
+        "# DB_PASSWORD=password",
+        "# DB_NAME=database_name",
+        "",
+        "# Web Service Configuration",
+        "# HOST=0.0.0.0",
+        "# PORT=8000",
+        "# DEBUG=False",
+        "",
+        "# External APIs",
+        "# WEATHER_API_KEY=your-weather-api-key",
+        "# NEWS_API_KEY=your-news-api-key", 
+        "# GITHUB_TOKEN=ghp_your-github-token",
+        "",
+        "# AWS Credentials",
+        "# AWS_ACCESS_KEY_ID=your-access-key",
+        "# AWS_SECRET_ACCESS_KEY=your-secret-key",
+        "# AWS_REGION=us-east-1",
+        "",
+        "# Other Common Services",
+        "# STRIPE_API_KEY=sk_test_your-stripe-key",
+        "# TWILIO_ACCOUNT_SID=AC-your-twilio-sid",
+        "# TWILIO_AUTH_TOKEN=your-twilio-token",
+        "# SLACK_BOT_TOKEN=xoxb-your-slack-token",
+        "# DISCORD_TOKEN=your-discord-bot-token",
+    ])
+    
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(env_content))
+
+def create_enhanced_readme(path: str, prompt: str, detected_vars: Dict[str, str], requirements: List[str]):
+    """Create a comprehensive README with setup instructions"""
+    
+    readme_content = f"""# MCP Application
+
+Generated by MetaMCP based on: **{prompt}**
+
+## 🚀 Quick Start
+
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Environment Setup
+Copy the `.env` file and fill in your API keys and configuration:
+
+```bash
+# The .env file contains placeholders for detected variables
+# Edit .env and replace placeholder values with your actual keys
+```
+
+### 3. Required Environment Variables
+
+"""
+    
+    if detected_vars:
+        readme_content += "**Detected from your code:**\n"
+        for var, placeholder in sorted(detected_vars.items()):
+            readme_content += f"- `{var}`: {placeholder.replace('_', ' ').title()}\n"
+        readme_content += "\n"
+    
+    readme_content += """### 4. Run the Application
+```bash
+python main.py
+```
+
+## 📦 Package Contents
+
+- `main.py`: Main application code
+- `requirements.txt`: Python dependencies  
+- `.env`: Environment variables (fill with your keys)
+- `README.md`: This file
+
+## 🔧 Configuration
+
+### Environment Variables
+All sensitive data like API keys should be stored in the `.env` file. The application will automatically load these using `python-dotenv`.
+
+### Dependencies
+"""
+    
+    if requirements:
+        readme_content += "This application requires the following packages:\n"
+        for req in requirements:
+            readme_content += f"- {req}\n"
+    else:
+        readme_content += "This application uses only Python standard library modules.\n"
+    
+    readme_content += f"""
+
+## 📝 Usage Instructions
+
+{prompt}
+
+## 🛡️ Security Notes
+
+1. **Never commit your `.env` file to version control**
+2. Keep your API keys secret and rotate them regularly
+3. Use environment-specific `.env` files for different deployments
+4. Consider using a secrets management service for production
+
+## 🤝 Support
+
+This MCP was generated automatically. If you need help:
+1. Check the `.env` file for required variables
+2. Ensure all dependencies are installed
+3. Verify your API keys are valid and have proper permissions
+
+---
+*Generated by MetaMCP - Your AI-powered MCP Generator*
+"""
+    
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(readme_content)
+
 def extract_code_from_response(text: str) -> str:
     m = re.findall(r"```python(.*?)```", text, re.DOTALL | re.IGNORECASE)
     if m:
@@ -366,22 +577,49 @@ def extract_code_from_response(text: str) -> str:
         return m2[0].strip()
     return text.strip()
 
-def create_env_file(path: str):
-    """Create a .env file with placeholders for API keys"""
-    env_content = (
-        "# Environment Variables\n"
-        "API_KEY=YOUR_API_KEY_HERE\n"
-        "SECRET_KEY=YOUR_SECRET_KEY_HERE\n"
-    )
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(env_content)
+def enhance_code_with_env_loading(code: str) -> str:
+    """Enhance the generated code to properly load environment variables"""
+    
+    # Check if dotenv is already imported
+    has_dotenv = 'from dotenv import load_dotenv' in code or 'import dotenv' in code
+    has_os = 'import os' in code
+    
+    # Add necessary imports at the top
+    lines = code.split('\n')
+    import_section = []
+    other_lines = []
+    
+    # Separate imports from other code
+    in_imports = True
+    for line in lines:
+        stripped = line.strip()
+        if in_imports and (stripped.startswith('import ') or stripped.startswith('from ') or stripped == '' or stripped.startswith('#')):
+            import_section.append(line)
+        else:
+            in_imports = False
+            other_lines.append(line)
+    
+    # Add missing imports
+    if not has_os:
+        import_section.append('import os')
+    if not has_dotenv:
+        import_section.append('from dotenv import load_dotenv')
+    
+    # Add load_dotenv() call
+    if not 'load_dotenv()' in code:
+        import_section.extend(['', '# Load environment variables', 'load_dotenv()', ''])
+    
+    # Reconstruct code
+    enhanced_code = '\n'.join(import_section + other_lines)
+    
+    return enhanced_code
 
 def make_zip(files: dict, zip_path: str):
     """Bundle all files into a single zip"""
     with zipfile.ZipFile(zip_path, "w") as zipf:
-        for f in files.values():
-            if os.path.exists(f):
-                zipf.write(f, os.path.basename(f))
+        for filename, filepath in files.items():
+            if os.path.exists(filepath):
+                zipf.write(filepath, os.path.basename(filepath))
     return zip_path
 
 # ---------- Routes ----------
@@ -391,19 +629,34 @@ def generate(req: PromptRequest):
     try:
         print(f"Received request: {req.prompt}")  # Debug log
         
-        # 1) Call OpenRouter
+        # 1) Call OpenRouter with enhanced prompt
+        enhanced_prompt = f"""Generate MCP (Model Context Protocol) code based on: {req.prompt}
+
+Please follow these guidelines:
+1. Use environment variables for all API keys, secrets, and configuration
+2. Use os.getenv() to load environment variables with sensible defaults where possible
+3. Include proper error handling for missing environment variables
+4. Add comments explaining what environment variables are needed
+5. Structure the code to be production-ready
+6. Include proper imports and dependencies"""
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
                     "content": (
-                        "You are an AI code generator.\n"
+                        "You are an expert MCP (Model Context Protocol) code generator.\n"
+                        "Generate production-ready Python code that:\n"
+                        "- Uses environment variables for all sensitive data\n"
+                        "- Includes proper error handling\n"
+                        "- Has clear documentation\n"
+                        "- Follows best practices for security\n"
                         "Output ONLY ```python ... ``` fenced code.\n"
-                        "Never add extra text.\n"
+                        "Never add extra explanatory text outside the code block.\n"
                     )
                 },
-                {"role": "user", "content": f"Generate MCP code based on: {req.prompt}"},
+                {"role": "user", "content": enhanced_prompt},
             ],
         )
 
@@ -413,59 +666,72 @@ def generate(req: PromptRequest):
         if not code_output:
             return {"error": "The model returned no code."}
 
-        # 2) File structure (Keep existing mcp/generated structure)
+        # 2) Enhance the code with proper env loading
+        enhanced_code = enhance_code_with_env_loading(code_output)
+
+        # 3) File structure (Keep existing mcp/generated structure)
         save_dir = os.path.join("mcp", "generated")
         os.makedirs(save_dir, exist_ok=True)
 
-        py_path = os.path.join(save_dir, safe_filename(req.prompt, ".py"))
+        py_path = os.path.join(save_dir, "main.py")  # Always use main.py
         req_path = os.path.join(save_dir, "requirements.txt")
         readme_path = os.path.join(save_dir, "README.md")
         env_path = os.path.join(save_dir, ".env")
         zip_path = os.path.join(save_dir, "mcp_package.zip")
 
-        # 3) Write files
+        # 4) Analyze code for requirements and environment variables
+        deps = extract_requirements_from_code(enhanced_code)
+        detected_vars = extract_api_keys_and_secrets(enhanced_code)
+        
+        # Add python-dotenv to requirements if not present
+        if 'python-dotenv' not in deps:
+            deps.append('python-dotenv')
+
+        # 5) Write enhanced files
         with open(py_path, "w", encoding="utf-8") as f:
-            f.write(code_output)
+            f.write(enhanced_code)
 
-        deps = extract_requirements_from_code(code_output)
-
-        all_deps = set()
+        # Write requirements with all dependencies
+        all_deps = set(deps)
         if os.path.exists(req_path):
             with open(req_path, "r", encoding="utf-8") as f:
                 for line in f:
                     if line.strip():
                         all_deps.add(line.strip())
-        all_deps.update(deps)
 
         with open(req_path, "w", encoding="utf-8") as f:
             f.write("\n".join(sorted(all_deps)))
 
-        with open(readme_path, "w", encoding="utf-8") as f:
-            f.write(f"# MCP\n\nPrompt: {req.prompt}\n\nGenerated by MetaMCP.\n")
+        # Create enhanced README
+        create_enhanced_readme(readme_path, req.prompt, detected_vars, sorted(all_deps))
 
-        create_env_file(env_path)
+        # Create enhanced .env file
+        create_enhanced_env_file(env_path, detected_vars)
 
-        # 4) Make ZIP
+        # 6) Make ZIP
         files = {
-            "python_file": py_path,
-            "requirements": req_path,
-            "readme": readme_path,
-            "env": env_path,
+            "main.py": py_path,
+            "requirements.txt": req_path,
+            "README.md": readme_path,
+            ".env": env_path,
         }
         make_zip(files, zip_path)
         
-        print(f"Generated files and zip at: {zip_path}")  # Debug log
+        print(f"Generated enhanced files and zip at: {zip_path}")  # Debug log
 
         # Generate a unique zip filename for download
-        download_zip_filename = safe_filename(req.prompt, "_package.zip")
+        download_zip_filename = safe_filename(req.prompt, "_mcp_package.zip")
 
         return {
-            "message": "MCP generated successfully ✅",
+            "message": "Enhanced MCP package generated successfully ✅",
             "files": files,
             "zip": zip_path,
             "download_available": True,
             "download_filename": download_zip_filename,
-            "preview": code_output[:500] + ("..." if len(code_output) > 500 else "")
+            "preview": enhanced_code[:500] + ("..." if len(enhanced_code) > 500 else ""),
+            "detected_env_vars": len(detected_vars),
+            "dependencies_count": len(all_deps),
+            "env_vars": list(detected_vars.keys()) if detected_vars else []
         }
 
     except Exception as e:
@@ -481,17 +747,9 @@ def download_zip():
     print(f"Download requested for: {zip_path}")  # Debug log
     
     if os.path.exists(zip_path):
-        # Get the most recent python file to generate a better filename
-        try:
-            py_files = [f for f in os.listdir(save_dir) if f.endswith('.py')]
-            if py_files:
-                # Use the most recent .py file name for the zip
-                latest_py = max(py_files, key=lambda x: os.path.getctime(os.path.join(save_dir, x)))
-                download_filename = latest_py.replace('.py', '_package.zip')
-            else:
-                download_filename = "mcp_package.zip"
-        except:
-            download_filename = "mcp_package.zip"
+        # Generate a timestamped filename
+        timestamp = int(time.time())
+        download_filename = f"mcp_package_{timestamp}.zip"
             
         print(f"Serving file as: {download_filename}")  # Debug log
         
