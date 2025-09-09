@@ -754,29 +754,7 @@ Examples:
               </div>
             )}
 
-            {/* Code Preview */}
-            {response.preview && (
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex space-x-2">
-                      <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                    </div>
-                    <h3 className="font-semibold text-gray-900 flex items-center space-x-2">
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                      </svg>
-                      <span>Code Preview</span>
-                    </h3>
-                  </div>
-                </div>
-                <pre className="p-6 bg-gray-900 text-green-400 overflow-auto text-sm leading-relaxed font-mono">
-                  {response.preview}
-                </pre>
-              </div>
-            )}
+            
 
             {/* Test Run Output */}
             {response.test_run && (
