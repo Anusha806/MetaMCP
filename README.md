@@ -63,10 +63,17 @@ metamcp/
 git clone https://github.com/Anusha806/MetaMCP.git
 cd metamcp
 ```
+### 2. Create a .env file and add the followinf API keys
+```
+OPENROUTER_API_KEY=sk-xxxx...
+GITHUB_TOKEN=github.....
+GITHUB_REPO=githubusername/repositoryname
+```
 
-### 2. Backend Setup
+### 3. Backend Setup
 
 ```bash
+
 # Navigate to backend
 cd backend
 
@@ -78,16 +85,17 @@ python -m venv venv
 # source venv/bin/activate  # macOS/Linux
 
 # Install dependencies
-pip install fastapi uvicorn python-dotenv openai
-
-# Create .env file and add your API key
-echo "OPENAI_API_KEY=sk-xxxx..." > .env
+pip install requirements.txt
 
 # Start backend server
 uvicorn app.main:app --reload --port 8000
+
+# Verify if your backend is running
+navigate to https://localhost:8000
+
 ```
 
-### 3. Frontend Setup
+### 4. Frontend Setup
 
 ```bash
 # Open a new terminal and navigate to frontend
@@ -97,10 +105,13 @@ cd frontend
 npm install
 
 # Start development server
+npm run build 
 npm start
+
+
 ```
 
-### 4. Access the Application
+### 5. Access the Application
 
 Open your browser and navigate to:
 ```
@@ -204,17 +215,12 @@ We welcome contributions! Please follow these steps:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
 If you encounter any issues or have questions:
-
-1. Check the [Issues](https://github.com/Anusha806/MetaMCP/issues) page
-2. Create a new issue if your problem isn't already reported
-3. Provide detailed information about your environment and the issue
+1. Provide detailed information about your environment and the issue
 
 ## 🙏 Acknowledgments
 
@@ -236,3 +242,4 @@ If you encounter any issues or have questions:
 **Built with ❤️ by the MetaMCP Team**
 
 [GitHub](https://github.com/Anusha806/MetaMCP) • [Report Bug](https://github.com/Anusha806/MetaMCP/issues) • [Request Feature](https://github.com/Anusha806/MetaMCP/issues)
+
