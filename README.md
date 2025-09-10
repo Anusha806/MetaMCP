@@ -1,55 +1,46 @@
-**MetaMCP **
+# MetaMCP
 
-AI-Powered Model Context Protocol (MCP) Code Generator
+**AI-Powered Model Context Protocol (MCP) Code Generator**
 
 MetaMCP is a full-stack application that automatically generates MCP (Model Context Protocol) code based on natural language descriptions. Simply describe what you want your MCP to do, and MetaMCP will generate a complete, ready-to-use package with all necessary files.
 
-**Features**
+![MetaMCP Logo](https://via.placeholder.com/600x200/4A90E2/FFFFFF?text=MetaMCP)
 
--- AI-Powered Generation – Generate high-quality MCP code using GPT-4o-mini via OpenRouter
+## ✨ Features
 
--- Complete Package Creation – Automatically creates Python code, requirements.txt, README.md, and .env template
+- **🤖 AI-Powered Generation** – Generate high-quality MCP code using GPT-4o-mini via OpenRouter
+- **📦 Complete Package Creation** – Automatically creates Python code, requirements.txt, README.md, and .env template
+- **⬇️ One-Click Download** – Download complete MCP packages as ZIP files
+- **👁️ Live Preview** – View generated code before downloading
+- **🔍 Smart Dependencies** – Detects and includes required Python packages
+- **💾 Local Storage** – Generated files saved in `mcp/generated/` for easy access
+- **🎨 Modern UI** – Clean and responsive React frontend with real-time feedback
 
--- One-Click Download – Download complete MCP packages as ZIP files
+## 🏗️ Architecture
 
--- Live Preview – View generated code before downloading
+### Backend (FastAPI)
+- **Framework:** FastAPI (Python)
+- **AI Integration:** OpenAI client connected via OpenRouter
+- **File Management:** Automatic file creation and ZIP packaging
+- **API Endpoints:** RESTful API for code generation and downloads
 
--- Smart Dependencies – Detects and includes required Python packages
+### Frontend (React/Next.js)
+- **Framework:** React with TypeScript
+- **Styling:** Modern inline styles
+- **State Management:** React Hooks
+- **UX:** Real-time feedback and download management
 
--- Local Storage – Generated files saved in mcp/generated/ for easy access
+## 📋 Prerequisites
 
--- Modern UI – Clean and responsive React frontend with real-time feedback
+Before you begin, ensure you have the following installed:
 
-**Architecture
-Backend (FastAPI)**
+- **Node.js** (v16 or higher)
+- **Python** (v3.8 or higher)
+- **OpenRouter API Key** (for AI-powered code generation)
 
-**Framework:** FastAPI (Python)
+## 📂 Project Structure
 
-**AI Integration:** OpenAI client connected via OpenRouter
-
-**File Management:** Automatic file creation and ZIP packaging
-
-**API Endpoints:** RESTful API for code generation and downloads
-
-**Frontend (React/Next.js)**
-
-**Framework:** React with TypeScript
-
-**Styling:** Modern inline styles
-
-**State Management:** React Hooks
-
-**UX:** Real-time feedback and download management
-
-**Prerequisites**
-
-Node.js (v16 or higher)
-
-Python (v3.8 or higher)
-
-OpenRouter API Key (for AI-powered code generation)
-
-**Project Structure**
+```
 metamcp/
 ├── backend/
 │   ├── main.py              # FastAPI backend application
@@ -62,13 +53,20 @@ metamcp/
 │   ├── package.json
 │   └── next.config.js
 └── README.md
+```
 
-**Quick Start**
-**1. Clone the Repository**
+## 🚀 Quick Start
+
+### 1. Clone the Repository
+
+```bash
 git clone https://github.com/Anusha806/MetaMCP.git
 cd metamcp
+```
 
-**2. Backend Setup**
+### 2. Backend Setup
+
+```bash
 # Navigate to backend
 cd backend
 
@@ -82,15 +80,17 @@ python -m venv venv
 # Install dependencies
 pip install fastapi uvicorn python-dotenv openai
 
-# Add your API key in .env
-OPENAI_API_KEY=sk-xxxx...
+# Create .env file and add your API key
+echo "OPENAI_API_KEY=sk-xxxx..." > .env
 
 # Start backend server
 uvicorn app.main:app --reload --port 8000
+```
 
+### 3. Frontend Setup
 
-**3. Frontend Setup**
-# Open a new terminal
+```bash
+# Open a new terminal and navigate to frontend
 cd frontend
 
 # Install dependencies
@@ -98,48 +98,141 @@ npm install
 
 # Start development server
 npm start
+```
 
-**4. Access the App**
+### 4. Access the Application
 
-Open your browser at:
+Open your browser and navigate to:
+```
 http://localhost:3000
+```
 
-**Usage**
+## 📖 Usage
 
-Enter Description – Describe the MCP functionality you want
-Example:
+1. **Enter Description** – Describe the MCP functionality you want in natural language
+2. **Generate Code** – Click the "Generate MCP" button
+3. **Preview Output** – Review the generated code in the preview panel
+4. **Download Package** – Click "Download ZIP" to get the complete package
 
-Create a weather API MCP that fetches current weather data
+### Example Prompts
 
+```
+Build me a tool that fetches and displays the 7-day weather forecast for Vijayawada, India. 
+The tool should return:
+- The daily high and low temperature
+- A short description of the conditions (e.g., sunny, cloudy, thunderstorms)
+- Any severe weather alerts if available
+- Format the output in a clean, readable table or list
+```
 
-Generate Code – Click Generate MCP
+```
+Create a file manager MCP that can:
+- List files in a directory
+- Read file contents
+- Create new files
+- Delete files with confirmation
+```
 
-Preview Output – Review the generated code
+## 📦 Generated Package Structure
 
-Download Package – Click  Download ZIP to get the complete package
+When you download a generated MCP package, it will contain:
 
-**Example Prompts**
-
-Build me a tool that fetches and displays the 7-day weather forecast for Vijayawada, India. The tool should return: The daily high and low temperature. A short description of the conditions (e.g., sunny, cloudy, thunderstorms). Any severe weather alerts if available. Format the output in a clean, readable table or list so that it’s easy to scan the forecast for the whole week
-
-**Generated Package Structure**
+```
 your_mcp_package.zip
 ├── your_mcp_code.py      # Main MCP implementation
 ├── requirements.txt      # Python dependencies
-├── README.md             # Documentation
+├── README.md             # Documentation and usage instructions
 └── .env                  # Environment variables template
+```
 
-**How It Works**
+## 🔄 How It Works
 
-User Input → Describe the desired MCP functionality
+1. **User Input** → Describe the desired MCP functionality
+2. **AI Processing** → Backend sends request to GPT-4o-mini (via OpenRouter)
+3. **Code Generation** → AI generates Python MCP code with proper structure
+4. **Package Creation** → Backend creates requirements.txt, README.md, and .env files
+5. **ZIP Bundling** → All files are packaged into a downloadable ZIP
+6. **Download** → User downloads the ready-to-use MCP package
 
-AI Processing → Backend sends request to GPT-4o-mini (via OpenRouter)
+## 🛠️ API Endpoints
 
-Code Generation → AI generates Python MCP code
+### POST `/generate-mcp`
+Generates MCP code based on user description.
 
-Package Creation → Backend creates requirements.txt, README.md, .env
+**Request Body:**
+```json
+{
+  "description": "Your MCP description here"
+}
+```
 
-ZIP Bundling → All files packaged into a downloadable ZIP
+**Response:**
+```json
+{
+  "code": "Generated Python code",
+  "requirements": "Python dependencies",
+  "readme": "Generated README content",
+  "env_template": "Environment variables template"
+}
+```
 
+### GET `/download/{filename}`
+Downloads the generated MCP package as a ZIP file.
 
-Download → User downloads the ready-to-use MCP package
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file in the backend directory:
+
+```env
+OPENAI_API_KEY=your_openrouter_api_key_here
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+```
+
+### Frontend Configuration
+
+The frontend automatically connects to the backend running on `http://localhost:8000`. To change this, modify the API base URL in your React components.
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Issues](https://github.com/Anusha806/MetaMCP/issues) page
+2. Create a new issue if your problem isn't already reported
+3. Provide detailed information about your environment and the issue
+
+## 🙏 Acknowledgments
+
+- **OpenRouter** for providing AI model access
+- **FastAPI** for the excellent Python web framework
+- **React** for the powerful frontend library
+- **Model Context Protocol** community for the protocol specifications
+
+## 📊 Roadmap
+
+- [ ] Support for multiple AI models
+- [ ] Custom templates and boilerplates
+- [ ] Built-in MCP testing tools
+- [ ] Integration with popular IDEs
+- [ ] Community-shared MCP templates
+
+---
+
+**Built with ❤️ by the MetaMCP Team**
+
+[GitHub](https://github.com/Anusha806/MetaMCP) • [Report Bug](https://github.com/Anusha806/MetaMCP/issues) • [Request Feature](https://github.com/Anusha806/MetaMCP/issues)
