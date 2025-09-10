@@ -165,57 +165,6 @@ your_mcp_package.zip
 5. **ZIP Bundling** → All files are packaged into a downloadable ZIP
 6. **Download** → User downloads the ready-to-use MCP package
 
-## 🛠️ API Endpoints
-
-### POST `/generate-mcp`
-Generates MCP code based on user description.
-
-**Request Body:**
-```json
-{
-  "description": "Your MCP description here"
-}
-```
-
-**Response:**
-```json
-{
-  "code": "Generated Python code",
-  "requirements": "Python dependencies",
-  "readme": "Generated README content",
-  "env_template": "Environment variables template"
-}
-```
-
-### GET `/download/{filename}`
-Downloads the generated MCP package as a ZIP file.
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file in the backend directory:
-
-```env
-OPENAI_API_KEY=your_openrouter_api_key_here
-OPENAI_BASE_URL=https://openrouter.ai/api/v1
-```
-
-### Frontend Configuration
-
-The frontend automatically connects to the backend running on `http://localhost:8000`. To change this, modify the API base URL in your React components.
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-
 
 ## 🆘 Support
 
@@ -242,4 +191,5 @@ If you encounter any issues or have questions:
 **Built with ❤️ by the MetaMCP Team**
 
 [GitHub](https://github.com/Anusha806/MetaMCP) • [Report Bug](https://github.com/Anusha806/MetaMCP/issues) • [Request Feature](https://github.com/Anusha806/MetaMCP/issues)
+
 
