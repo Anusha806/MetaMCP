@@ -15,6 +15,8 @@ MetaMCP is a full-stack application that automatically generates MCP (Model Cont
 - **🔍 Smart Dependencies** – Detects and includes required Python packages
 - **💾 Local Storage** – Generated files saved in `mcp/generated/` for easy access
 - **🎨 Modern UI** – Clean and responsive React frontend with real-time feedback
+- - **💾 Github Integration** – Automatically commits in github
+
 
 ## 🏗️ Architecture
 
@@ -164,6 +166,7 @@ your_mcp_package.zip
 4. **Package Creation** → Backend creates requirements.txt, README.md, and .env files
 5. **ZIP Bundling** → All files are packaged into a downloadable ZIP
 6. **Download** → User downloads the ready-to-use MCP package
+7. **GitHub Integration** → Automatically commits the zip folder in your github repository 
 
 
 ## 🆘 Support
@@ -190,6 +193,7 @@ If you encounter any issues or have questions:
 
 **Built with ❤️ by the MetaMCP Team**
 
-[GitHub](https://github.com/Anusha806/MetaMCP) • [Report Bug](https://github.com/Anusha806/MetaMCP/issues) • [Request Feature](https://github.com/Anusha806/MetaMCP/issues)
+[GitHub](https://github.com/Anusha806/MetaMCP) • [Report Bug](https://github.com/Anusha806/MetaMCP/issues) 
+
 
 
